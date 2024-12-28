@@ -1,4 +1,4 @@
-import { AddtoWatchHostory, Changeavatar, Changecoverimage, Fetchuserdetail, getWatchHistory, login, logout, Registration, UpdateAccountDetails, UpdatePassword  } from "../Controller/user.controller.js";
+import { AddtoWatchHistory, AddView, Changeavatar, Changecoverimage, Fetchuserdetail, getWatchHistory, login, logout, Registration, UpdateAccountDetails, UpdatePassword  } from "../Controller/user.controller.js";
 import { Router } from 'express'
 import { upload } from "../midelware/multer.midelwar.js";
 import VerifyJWT from "../midelware/JWT.midelware.js";
@@ -25,7 +25,8 @@ UserRouter.route('/updatepass').post(VerifyJWT,UpdatePassword)
 UserRouter.route('/updatedetail').patch(VerifyJWT,UpdateAccountDetails)
 UserRouter.route('/changeavatar').patch(VerifyJWT,upload.single("avatar"),Changeavatar)
 UserRouter.route('/changecoverimage').patch(VerifyJWT,upload.single("coverimage"),Changecoverimage)
-UserRouter.post('/addtowatchHistory/:videoid',VerifyJWT, AddtoWatchHostory);
+UserRouter.route('/addview/:videoid').patch(AddView)
+UserRouter.post('/addtowatchHistory/:videoid',VerifyJWT, AddtoWatchHistory);
 UserRouter.get('/fetchwatchHistory',VerifyJWT, getWatchHistory);
 
 export default UserRouter

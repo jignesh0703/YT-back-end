@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import UserModel from "../models/user.model.js";
+import { Video } from "../models/video.model.js";
 import UploadOnCloudinary from "../utils/cloudnary.js";
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -318,93 +319,124 @@ const Changecoverimage = async (req, res) => {
         return res.status(200).json({ message: "Coverimage uploaded successfully", user });
 
     } catch (error) {
-        console.log(error);
         return res.status(400).json({ message: "Something went wrong while uploading coverimage" });
     }
 };
 
-const AddtoWatchHostory = async (req, res) => {
+const AddView = async (req, res) => {
     try {
-        let VideoId = req.params.videoid;
-
+        let VideoId = req.params.videoid
         VideoId = VideoId.replace(/^:/, "")
 
-        if (!mongoose.Types.ObjectId.isValid(VideoId)) {
-            return res.status(400).json({ message: "Invalid video ID" });
+        const user =  await Video.findByIdAndUpdate(
+            VideoId,
+            { $inc: { views: 1 } },
+            {
+                new : true
+            }
+        )
+
+        if(!user){
+            return res.status(400).json({ message: "Video not found "});
         }
 
-        const user = req.user._id;
-
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        if (user.watchHistory.includes(mongoose.Types.ObjectId(VideoId))) {
-            await user.updateOne(
-                {
-                    _id: req.user._id
-                },
-                {
-                    $pull : { watchHistory : mongoose.Types.ObjectId(VideoId) }
-                }
-            )
-        }
-
-        user.watchHistory.unshift(mongoose.Types.ObjectId(videoId));
-
-        await user.save();
-
-        return res.status(200).json({
-          message: "Video added to watch history",
-          watchHistory: user.watchHistory,
-        });
+        return res.status(200).json({ message: "View added" , user });
 
     } catch (error) {
-        console.log(error)
         return res.status(400).json({ message: "Something went wrong try again" });
     }
 }
 
-const getWatchHistory = async (req, res) => {
+const AddtoWatchHistory = async (req, res) => {
     try {
-        const userId = req.params.userId;  // Assume userId is passed in the request params
+        let videoId = req.params.videoid;
 
-        // Aggregation pipeline
-        const watchHistory = await UserModel.aggregate([
-            {
-                $match: { user: new mongoose.Types.ObjectId(userId) }  // Match the user's watch history
-            },
-            {
-                $lookup: {
-                    from: "videos",  // Video collection
-                    localField: "video",  // Field in WatchHistory that references video
-                    foreignField: "_id",  // _id of the video document
-                    as: "videoDetails"  // This will be an array containing the video details
-                }
-            },
-            {
-                $unwind: "$videoDetails"  // Unwind the video details array to turn it into an object
-            },
-            {
-                $project: {  // Specify the fields to include in the result
-                    _id: 0,
-                    videoId: "$videoDetails._id",
-                    title: "$videoDetails.title",
-                    description: "$videoDetails.description",
-                    publishedDate: "$videoDetails.publishedDate",
-                    watchedAt: 1  // Include the timestamp when the video was watched
-                }
-            },
-            {
-                $sort: { watchedAt: -1 }  // Sort by watch date, descending (most recent first)
-            }
-        ]);
+        videoId = videoId.replace(/^:/, "");
 
-        return res.status(200).json({ message: "Watch history fetched successfully", watchHistory });
+        if (!mongoose.Types.ObjectId.isValid(videoId)) {
+            return res.status(400).json({ message: "Invalid video ID" });
+        }
+
+        const user = await UserModel.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!Array.isArray(user.watchHistory)) {
+            user.watchHistory = [];
+        }
+
+        const videoObjectId = new mongoose.Types.ObjectId(videoId);
+
+        if (user.watchHistory.includes(videoObjectId)) {
+            user.watchHistory = user.watchHistory.filter(
+                (id) => !id.equals(videoObjectId)
+            );
+        }
+
+        user.watchHistory.unshift({
+            _id: videoObjectId,
+            watchedAt: new Date(), // Add the current timestamp
+        });
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Video added to watch history",
+            watchHistory: user.watchHistory,
+        });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Something went wrong, please try again" });
     }
 };
 
-export { Registration, login, logout, Fetchuserdetail, UpdatePassword, UpdateAccountDetails, Changeavatar, Changecoverimage, AddtoWatchHostory, getWatchHistory }
+const getWatchHistory = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const watchHistory = await UserModel.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(userId) } // Match the user
+            },
+            {
+                $lookup: {
+                    from: "videos", // The name of the video collection in MongoDB
+                    localField: "watchHistory", // The array field in UserModel
+                    foreignField: "_id", // The field in Video collection
+                    as: "videoDetails" // The alias for fetched data
+                }
+            },
+            {
+                $unwind: "$videoDetails" // Convert videoDetails array to individual objects
+            },
+            {
+                $project: { // Include only the required fields
+                    videoId: "$videoDetails._id",
+                    videolink: "$videoDetails.videolink",
+                    thumbnail: "$videoDetails.thumbnail",
+                    title: "$videoDetails.title",
+                    description: "$videoDetails.desciption",
+                    views: "$videoDetails.views",
+                    watchedAt: "$updatedAt"
+                }
+            },
+            {
+                $sort: { watchedAt: -1 } // Sort by most recently watched
+            }
+        ]);
+
+        return res.status(200).json({
+            message: "Watch history fetched successfully",
+            watchHistory,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Something went wrong, please try again" });
+    }
+};
+
+
+export { Registration, login, logout, Fetchuserdetail, UpdatePassword, UpdateAccountDetails, Changeavatar, Changecoverimage, AddView , AddtoWatchHistory, getWatchHistory }
