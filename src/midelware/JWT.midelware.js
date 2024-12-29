@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 
 const VerifyJWT = async (req, res, next) => {
     try {
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzZkNWNkZDA4MjBhMzI3ZjI5N2U2YjMiLCJlbWFpbCI6ImppZ3Nzc0BnbWFpbC5jb20iLCJpYXQiOjE3MzUzOTIyNzIsImV4cCI6MTczNTQ3ODY3Mn0.bBCrdPt7qUuAyKY-0fDufpNgJiEFJ13AM6BexNKqp2I"
-
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+        
         if (!token) {
             return res.status(400).json({ message: "Unauthorized request" })
         }
