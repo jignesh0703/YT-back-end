@@ -11,6 +11,10 @@ const app = express()
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));  // Parses application/x-www-form-urlencoded
 
+app.use('/',(req,res)=> {
+    res.send("MERN Stack project")
+})
+
 app.use('/api/user',UserRouter)
 app.use('/api/video',VideoRouter)
 app.use('/api/subscription',SubscriptionRoutes)
