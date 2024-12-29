@@ -16,7 +16,6 @@ const GenerateAccessAndRefreshToken = async (userid) => {
         return { accesstoken, refreshtoken }
 
     } catch (error) {
-        console.log(error)
         throw new Error("Somthing wrong try again");
     }
 }
@@ -129,7 +128,6 @@ const login = async (req, res) => {
             refreshtoken
         })
     } catch (error) {
-        console.error(error);
         return res.status(400).json({ message: "Unable to login the user at this time. Please try again later" });
     }
 }
@@ -170,7 +168,6 @@ const Fetchuserdetail = async (req, res) => {
         return res.status(200)
             .json({ message: "Data fetch successfully", user: req.user })
     } catch (error) {
-        console.log(error);
         return res.status(500).json({ message: "Failed to fetch user details" });
     }
 }
@@ -267,7 +264,6 @@ const Changeavatar = async (req, res) => {
         return res.status(200).json({ message: "Avatar uploaded successfully", user });
 
     } catch (error) {
-        console.log(error);
         return res.status(400).json({ message: "Something went wrong while uploading avatar" });
     }
 };
@@ -288,15 +284,11 @@ const Changecoverimage = async (req, res) => {
 
         if (user.coverimage) {
             const coverimageURL = user.coverimage;
-            console.log(coverimageURL)
             const publicId = coverimageURL.split('/').slice(-1)[0].split('.')[0]; // Remove version and file extension
-            console.log(publicId)
 
             const destroyResponse = await cloudinary.uploader.destroy(publicId);
-            console.log('Cloudinary destroy response:', destroyResponse);
 
             if (destroyResponse.result !== 'ok') {
-                console.error('Error destroying old image:', destroyResponse);
                 return res.status(500).json({ message: 'Error while deleting old avatar' });
             }
         }
@@ -328,19 +320,19 @@ const AddView = async (req, res) => {
         let VideoId = req.params.videoid
         VideoId = VideoId.replace(/^:/, "")
 
-        const user =  await Video.findByIdAndUpdate(
+        const user = await Video.findByIdAndUpdate(
             VideoId,
             { $inc: { views: 1 } },
             {
-                new : true
+                new: true
             }
         )
 
-        if(!user){
-            return res.status(400).json({ message: "Video not found "});
+        if (!user) {
+            return res.status(400).json({ message: "Video not found " });
         }
 
-        return res.status(200).json({ message: "View added" , user });
+        return res.status(200).json({ message: "View added", user });
 
     } catch (error) {
         return res.status(400).json({ message: "Something went wrong try again" });
@@ -369,15 +361,14 @@ const AddtoWatchHistory = async (req, res) => {
 
         const videoObjectId = new mongoose.Types.ObjectId(videoId);
 
-        if (user.watchHistory.includes(videoObjectId)) {
-            user.watchHistory = user.watchHistory.filter(
-                (id) => !id.equals(videoObjectId)
-            );
-        }
+        // Remove existing entry for the video if present
+        user.watchHistory = user.watchHistory.filter(
+            (entry) => entry._id && !entry._id.equals(videoObjectId)
+        );
 
         user.watchHistory.unshift({
             _id: videoObjectId,
-            watchedAt: new Date(), // Add the current timestamp
+            watchedAt: new Date(),
         });
 
         await user.save();
@@ -388,7 +379,6 @@ const AddtoWatchHistory = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ message: "Something went wrong, please try again" });
     }
 };
@@ -399,12 +389,15 @@ const getWatchHistory = async (req, res) => {
 
         const watchHistory = await UserModel.aggregate([
             {
-                $match: { _id: new mongoose.Types.ObjectId(userId) } // Match the user
+                $match: { _id: new mongoose.Types.ObjectId(userId) }
+            },
+            {
+                $unwind: "$watchHistory", // Unwind the watchHistory array
             },
             {
                 $lookup: {
                     from: "videos", // The name of the video collection in MongoDB
-                    localField: "watchHistory", // The array field in UserModel
+                    localField: "watchHistory._id", // The array field in UserModel
                     foreignField: "_id", // The field in Video collection
                     as: "videoDetails" // The alias for fetched data
                 }
@@ -413,14 +406,14 @@ const getWatchHistory = async (req, res) => {
                 $unwind: "$videoDetails" // Convert videoDetails array to individual objects
             },
             {
-                $project: { // Include only the required fields
+                $project: {
                     videoId: "$videoDetails._id",
                     videolink: "$videoDetails.videolink",
                     thumbnail: "$videoDetails.thumbnail",
                     title: "$videoDetails.title",
                     description: "$videoDetails.desciption",
                     views: "$videoDetails.views",
-                    watchedAt: "$updatedAt"
+                    watchedAt: "$watchHistory.watchedAt",
                 }
             },
             {
@@ -433,10 +426,157 @@ const getWatchHistory = async (req, res) => {
             watchHistory,
         });
     } catch (error) {
-        console.error(error);
+        return res.status(500).json({ message: "Something went wrong, please try again" });
+    }
+};
+
+const DeleteVideoFromWatchHistory = async (req, res) => {
+    try {
+        let VideoId = req.params.videoid
+        VideoId = VideoId.replace(/^:/, "")
+
+        if (!VideoId) {
+            return res.status(400).json({ message: "Video not found" });
+        }
+
+        const userId = req.user._id
+
+        if (!userId) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        const watchHistoryFind = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                $pull: { watchHistory: { _id: VideoId } }
+            },
+            {
+                new: true
+            }
+        )
+
+        if (!watchHistoryFind) {
+            return res.status(400).json({ message: "video not found" });
+        }
+
+        return res.status(200).json({ message: "Video remove successfully" })
+
+    } catch (error) {
+        return res.status(500).json({ message: "Something went wrong, please try again" });
+    }
+}
+
+const ClearWatchHistory = async (req, res) => {
+    try {
+        const userId = req.user._id
+
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                watchHistory: []
+            },
+            {
+                new: true
+            }
+        )
+
+        if (!user) {
+            return res.status(400).json({ message: "Somthing wrong" });
+        }
+
+        return res.status(200).json({ message: "WatchHistory clear Successfully" })
+
+    } catch (error) {
+        return res.status(500).json({ message: "Something went wrong, please try again" });
+    }
+}
+
+const getUserChannelProfile = async (req, res) => {
+    try {
+        let Channelid = req.params.channelid;
+        Channelid = Channelid.replace(/^:/, "");
+
+        const Channel = await UserModel.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(Channelid)
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "subscriber",
+                    as: "subscribersTo"
+                }
+            },
+            {
+                $addFields: {
+                    subscribecount: {
+                        $size: "$subscribers"
+                    },
+                    channlesubscribecount: {
+                        $size: "$subscribersTo"
+                    },
+                    issubscribed: {
+                        $cond: {
+                            if: {
+                                $in: [req.user?._id, { $map: { input: "$subscribers", as: "sub", in: "$$sub.subscriber" } }]
+                            },
+                            then: true,
+                            else: false
+                        }
+                    }
+                }
+                
+            },
+            {
+                $project: {
+                    fullname: 1,
+                    username: 1,
+                    subscribersCount: 1,
+                    channelsSubscribedToCount: 1,
+                    isSubscribed: 1,
+                    avatar: 1,
+                    coverimage: 1,
+                    email: 1
+                }
+            }
+        ]);
+
+        if (!Channel?.length) {
+            return res.status(400).json({ message: "Channel not found" });
+        }
+
+        return res.status(200).json({ message: "User channel fetched successfully", Channel });
+
+    } catch (error) {
         return res.status(500).json({ message: "Something went wrong, please try again" });
     }
 };
 
 
-export { Registration, login, logout, Fetchuserdetail, UpdatePassword, UpdateAccountDetails, Changeavatar, Changecoverimage, AddView , AddtoWatchHistory, getWatchHistory }
+export {
+    Registration,
+    login,
+    logout,
+    Fetchuserdetail,
+    UpdatePassword,
+    UpdateAccountDetails,
+    Changeavatar,
+    Changecoverimage,
+    AddView,
+    AddtoWatchHistory,
+    getWatchHistory,
+    DeleteVideoFromWatchHistory,
+    ClearWatchHistory,
+    getUserChannelProfile
+}

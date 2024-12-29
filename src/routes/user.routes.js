@@ -1,4 +1,4 @@
-import { AddtoWatchHistory, AddView, Changeavatar, Changecoverimage, Fetchuserdetail, getWatchHistory, login, logout, Registration, UpdateAccountDetails, UpdatePassword  } from "../Controller/user.controller.js";
+import { AddtoWatchHistory, AddView, Changeavatar, Changecoverimage, ClearWatchHistory, DeleteVideoFromWatchHistory, Fetchuserdetail, getUserChannelProfile, getWatchHistory, login, logout, Registration, UpdateAccountDetails, UpdatePassword  } from "../Controller/user.controller.js";
 import { Router } from 'express'
 import { upload } from "../midelware/multer.midelwar.js";
 import VerifyJWT from "../midelware/JWT.midelware.js";
@@ -20,7 +20,7 @@ UserRouter.route('/add').post(
 )
 UserRouter.route('/login').post(login)
 UserRouter.route('/logout').post(VerifyJWT,logout)
-UserRouter.route('/getdetail').post(VerifyJWT,Fetchuserdetail)
+UserRouter.route('/getdetail').get(VerifyJWT,Fetchuserdetail)
 UserRouter.route('/updatepass').post(VerifyJWT,UpdatePassword)
 UserRouter.route('/updatedetail').patch(VerifyJWT,UpdateAccountDetails)
 UserRouter.route('/changeavatar').patch(VerifyJWT,upload.single("avatar"),Changeavatar)
@@ -28,5 +28,8 @@ UserRouter.route('/changecoverimage').patch(VerifyJWT,upload.single("coverimage"
 UserRouter.route('/addview/:videoid').patch(AddView)
 UserRouter.post('/addtowatchHistory/:videoid',VerifyJWT, AddtoWatchHistory);
 UserRouter.get('/fetchwatchHistory',VerifyJWT, getWatchHistory);
+UserRouter.post('/deletevideofromwatchhistory/:videoid',VerifyJWT, DeleteVideoFromWatchHistory);
+UserRouter.post('/clearwatchhistory',VerifyJWT, ClearWatchHistory);
+UserRouter.get('/getuserchannel/:channelid',VerifyJWT, getUserChannelProfile);
 
 export default UserRouter

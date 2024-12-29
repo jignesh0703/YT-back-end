@@ -64,7 +64,6 @@ const UploadVideo = async (req, res) => {
             .status(201)
             .json({ message: "Video uploaded successfully", newVideo })
     } catch (error) {
-        console.log(error)
         return res
             .status(500)
             .json({ message: "Somthing wrong while uploading video" })
@@ -109,7 +108,6 @@ const DeleteVideo = async (req, res) => {
         return res.status(201).json({ message: "Video deleted successfully" })
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({ message: "Somthing wrong try again" })
     }
 }
@@ -140,7 +138,6 @@ const GetAllVideos = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ message: "Something went wrong while fetching videos." });
     }
 };
@@ -209,7 +206,6 @@ const UpdateVideo = async (req, res) => {
         return res.status(200).json({ message: "Detail update successfully" })
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({ message: "Somthing wrong while update video detail" })
     }
 }

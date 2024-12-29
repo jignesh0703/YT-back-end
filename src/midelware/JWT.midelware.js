@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 const VerifyJWT = async (req, res, next) => {
     try {
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzZkNGFhZTU0MmMzMWUzMzQ2MWU4NjYiLCJlbWFpbCI6ImppZ3NAZ21haWwuY29tIiwiaWF0IjoxNzM1MzA0NDU3LCJleHAiOjE3MzUzOTA4NTd9.EigDSELD3qi3QJRJSQvQ6nzLQB9WOZZqwnheaZiJwUs"
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzZkNWNkZDA4MjBhMzI3ZjI5N2U2YjMiLCJlbWFpbCI6ImppZ3Nzc0BnbWFpbC5jb20iLCJpYXQiOjE3MzUzOTIyNzIsImV4cCI6MTczNTQ3ODY3Mn0.bBCrdPt7qUuAyKY-0fDufpNgJiEFJ13AM6BexNKqp2I"
 
         if (!token) {
             return res.status(400).json({ message: "Unauthorized request" })
@@ -21,7 +21,6 @@ const VerifyJWT = async (req, res, next) => {
         next()
 
     } catch (error) {
-        console.log(error)
         return res.status(400).json({ message: "Invalid access token" })
     }
 }
