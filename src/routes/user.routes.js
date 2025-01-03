@@ -19,6 +19,7 @@ UserRouter.route('/add').post(
     Registration
 )
 UserRouter.route('/login').post(login)
+UserRouter.route('/check').post(VerifyJWT)
 UserRouter.route('/logout').post(VerifyJWT,logout)
 UserRouter.route('/getdetail').get(VerifyJWT,Fetchuserdetail)
 UserRouter.route('/updatepass').post(VerifyJWT,UpdatePassword)

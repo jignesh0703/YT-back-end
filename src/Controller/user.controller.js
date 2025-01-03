@@ -88,14 +88,14 @@ const Registration = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, username, password } = req.body
+        const { emailorusername, password } = req.body
 
-        if (!email && !username) {
+        if (!emailorusername) {
             return res.status(400).json({ message: "email or username is required" })
         }
 
         const user = await UserModel.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ email: emailorusername }, { username: emailorusername }]
         })
 
         if (!user) {
@@ -114,7 +114,7 @@ const login = async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === "production", // Ensure secure cookies only in production
             sameSite: 'Strict'
         }
 
@@ -536,7 +536,7 @@ const getUserChannelProfile = async (req, res) => {
                         }
                     }
                 }
-                
+
             },
             {
                 $project: {
