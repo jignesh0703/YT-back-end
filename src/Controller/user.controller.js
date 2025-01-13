@@ -22,10 +22,10 @@ const GenerateAccessAndRefreshToken = async (userid) => {
 
 const Registration = async (req, res) => {
     try {
-        const { username, email, fullname, password } = req.body
+        const { username, email, channel_name, password } = req.body
 
         if (
-            [username, email, fullname, password].some((field) => field?.trim() === "")
+            [username, email, channel_name, password].some((field) => field?.trim() === "")
         ) {
             return res.status(400).json({ message: "All fields are Required!" })
         }
@@ -57,7 +57,7 @@ const Registration = async (req, res) => {
         const newUser = new UserModel({
             username,
             email,
-            fullname,
+            channel_name,
             avatar: avatarURL || "",
             coverimage: coverImageURL || "",
             password,
@@ -199,17 +199,27 @@ const UpdatePassword = async (req, res) => {
 
 const UpdateAccountDetails = async (req, res) => {
     try {
-        const { email, fullname, username } = req.body
+        const { email, channel_name, username } = req.body;
 
-        if (!email || !fullname || !username) {
+        if (!email || !channel_name || !username) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const existingUserByUsername = await UserModel.findOne({ username });
+        if (existingUserByUsername && existingUserByUsername._id.toString() !== req.user._id.toString()) {
+            return res.status(400).json({ message: "Username is already taken" });
+        }
+
+        const existingUserByEmail = await UserModel.findOne({ email });
+        if (existingUserByEmail && existingUserByEmail._id.toString() !== req.user._id.toString()) {
+            return res.status(400).json({ message: "Email is already taken" });
         }
 
         const user = await UserModel.findByIdAndUpdate(
             req.user?._id,
             {
                 $set: {
-                    fullname: fullname,
+                    channel_name: channel_name,
                     email: email,
                     username: username
                 }
@@ -217,14 +227,14 @@ const UpdateAccountDetails = async (req, res) => {
             {
                 new: true
             }
-        ).select("-password -refreshToken")
+        ).select("-password -refreshToken");
 
-        return res.status(200).json({ message: "Account details updated successfully", user })
-
+        return res.status(200).json({ message: "Account details updated successfully", user });
     } catch (error) {
-        return res.status(400).json({ message: "Somthing wrong try again" });
+        console.error(error);
+        return res.status(500).json({ message: "Something went wrong, try again" });
     }
-}
+};
 
 const Changeavatar = async (req, res) => {
     try {
@@ -406,6 +416,17 @@ const getWatchHistory = async (req, res) => {
                 $unwind: "$videoDetails" // Convert videoDetails array to individual objects
             },
             {
+                $lookup: {
+                    from: "users", // The name of the users collection in MongoDB
+                    localField: "videoDetails.owner", // The owner field in Video collection
+                    foreignField: "_id", // The field in User collection
+                    as: "userDetails" // The alias for fetched user data
+                }
+            },
+            {
+                $unwind: "$userDetails" // Convert userDetails array to individual objects
+            },
+            {
                 $project: {
                     videoId: "$videoDetails._id",
                     videolink: "$videoDetails.videolink",
@@ -413,7 +434,10 @@ const getWatchHistory = async (req, res) => {
                     title: "$videoDetails.title",
                     description: "$videoDetails.desciption",
                     views: "$videoDetails.views",
+                    createdAt: "$videoDetails.createdAt",
                     watchedAt: "$watchHistory.watchedAt",
+                    avatar: "$userDetails.avatar", // Get the user's avatar
+                    channel_name: "$userDetails.channel_name" // Get the user's channel_name
                 }
             },
             {
@@ -540,14 +564,14 @@ const getUserChannelProfile = async (req, res) => {
             },
             {
                 $project: {
-                    fullname: 1,
+                    channel_name: 1,
                     username: 1,
                     subscribersCount: 1,
                     channelsSubscribedToCount: 1,
                     isSubscribed: 1,
                     avatar: 1,
                     coverimage: 1,
-                    email: 1
+                    email: 1,
                 }
             }
         ]);
@@ -563,6 +587,28 @@ const getUserChannelProfile = async (req, res) => {
     }
 };
 
+const CheckChannel = async (req, res) => {
+    try {
+        if (!req.user._id) {
+            return res.status(200).json({ user: 'falses' });
+        }
+
+        const user = req.user._id.toString();
+        let id = req.params.userid.replace(/^:/, "");
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid video ID" });
+        }
+
+        if (user === id) {
+            return res.status(200).json({ user: 'true' });
+        } else {
+            return res.status(200).json({ user: 'false' });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: "Something went wrong, please try again" });
+    }
+};
 
 export {
     Registration,
@@ -578,5 +624,6 @@ export {
     getWatchHistory,
     DeleteVideoFromWatchHistory,
     ClearWatchHistory,
-    getUserChannelProfile
+    getUserChannelProfile,
+    CheckChannel
 }

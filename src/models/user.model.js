@@ -19,7 +19,7 @@ const UserSchema = new Schema(
             trim: true,
             lowercase: true
         },
-        fullname: {
+        channel_name: {
             type: String,
             required: true
         },
@@ -47,6 +47,7 @@ const UserSchema = new Schema(
         }
     },
     {
+        versionKey : false,
         timestamps: true
     }
 )

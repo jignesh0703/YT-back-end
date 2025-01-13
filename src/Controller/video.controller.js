@@ -122,8 +122,10 @@ const GetAllVideos = async (req, res) => {
         const filter = { isPublished: true };
 
         const videos = await Video.find(filter)
+            .sort({ createdAt: -1 })
             .skip((pageNum - 1) * limitNum)
-            .limit(limitNum);
+            .limit(limitNum)
+            .populate('owner', 'channel_name avatar');
 
         // Get the total count of documents matching the filter
         const totalVideos = await Video.countDocuments(filter);
@@ -152,7 +154,7 @@ const GetVideoById = async (req, res) => {
             return res.status(404).json({ message: "Invalid video ID" })
         }
 
-        const Getvideo = await Video.findById(videoId)
+        const Getvideo = await Video.findById(videoId).populate('owner', 'channel_name avatar');
 
         if (!Video) {
             return res.status(404).json({ message: "Video is not found" })
@@ -192,13 +194,10 @@ const UpdateVideo = async (req, res) => {
             if (!thumbnail.path) {
                 return res.status(403).json({ message: "thubmnail is required" });
             }
-
             const UploadInCloudnary = await UploadOnCloudinary(thumbnail.path)
-
             if (!UploadInCloudnary) {
                 return res.status(403).json({ message: "Fail to upload thubmnail on Cloudinary" });
             }
-
             video.thumbnail = UploadInCloudnary.secure_url;
         }
 
@@ -207,6 +206,34 @@ const UpdateVideo = async (req, res) => {
 
     } catch (error) {
         return res.status(500).json({ message: "Somthing wrong while update video detail" })
+    }
+}
+
+const ChechVideoPublic = async (req,res) => {
+    try {
+        let videoId = req.params.id
+        const userId = req.user._id
+
+        videoId = videoId.replace(/^:/, "")
+
+        if (!mongoose.Types.ObjectId.isValid(videoId)) {
+            return res.status(400).json({ message: "Invalid video ID" });
+        }
+
+        const video = await Video.findById(videoId)
+
+        if (!video) {
+            return res.status(404).json({ message: "video is not found" })
+        }
+
+        if (video.owner.toString() !== userId.toString()) {
+            return res.status(500).json({ message: "you are not allowed to change anything in this video" })
+        }
+
+        return res.status(200).json({ isPublished : video.isPublished })
+
+    } catch (error) {
+        return res.status(500).json({ message: "Somthing wrong try again" })
     }
 }
 
@@ -235,11 +262,76 @@ const ToggleVideoPublic = async (req, res) => {
 
         await video.save()
 
-        return res.status(200).json({message:`Video ${video.isPublished ? "published" : "unpublished"} successfully`})
+        return res.status(200).json({ message: `Video ${video.isPublished ? "published" : "unpublished"} successfully` })
 
     } catch (error) {
         return res.status(500).json({ message: "Somthing wrong try again" })
     }
 }
 
-export { UploadVideo, DeleteVideo, GetAllVideos, GetVideoById, UpdateVideo, ToggleVideoPublic }
+const GetIndivisualUserVideo = async (req, res) => {
+    try {
+        const userId = req.user?._id
+        const Videos = await Video.find({
+            owner: userId
+        }).populate('owner', 'channel_name avatar')
+
+        return res.status(200).json({ message: 'Video Fetch successfully', Videos })
+
+    } catch (error) {
+        return res.status(500).json({ message: "Somthing wrong try again" })
+    }
+}
+
+const CheckVideoowner = async (req, res) => {
+    try {
+        const userId = req.user?._id;
+        let videoId = req.params.videoId;
+        videoId = videoId.replace(/^:/, '');
+
+        if (!mongoose.Types.ObjectId.isValid(videoId)) {
+            return res.status(400).json({ message: "Invalid video ID." });
+        }
+
+        const Videosowner = await Video.find({
+            _id: videoId,
+            owner: userId
+        });
+
+        if (Videosowner.length === 0) {
+            return res.status(200).json({ isOwner: false });
+        }
+
+        return res.status(200).json({ isOwner: true });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Something went wrong, try again" });
+    }
+}
+
+const GetChannelAllVideo = async (req, res) => {
+    try {
+        let channelid = req.params.channelid
+        channelid = channelid.replace(/^:/, '')
+
+        if (!mongoose.Types.ObjectId.isValid(channelid)) {
+            return res.status(400).json({ message: "Invalid channel ID" });
+        }
+
+        const Videos = await Video.find({
+            owner: channelid
+        }).populate('owner', 'channel_name avatar');
+
+        if (Videos.length === 0) {
+            return res.status(404).json({ message: "No videos found for this channel" });
+        }
+
+        return res.status(200).json({ Videos });
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: "Something went wrong, try again" });
+    }
+}
+
+export { UploadVideo, DeleteVideo, GetAllVideos, GetVideoById, UpdateVideo, ToggleVideoPublic, GetIndivisualUserVideo, CheckVideoowner, GetChannelAllVideo, ChechVideoPublic }

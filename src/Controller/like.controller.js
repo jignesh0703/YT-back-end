@@ -86,13 +86,9 @@ const GetVideoLikeCount = async (req,res) => {
 
         const LikeCount = await Like.countDocuments({ Videos : Videoid })
 
-        if(!LikeCount){
-            return res.status(400).json({ message: "like Not Found" });
-        }
-
         return res.status(200).json({
             message: "Video like count fetched successfully",
-            LikeCount
+            LikeCount: LikeCount || 0,
         });
 
     } catch (error) {
@@ -113,12 +109,8 @@ const GetCommentLikeCount = async (req,res) => {
             Commnets : CommentID
         })
 
-        if(!CommentLikeCount){
-            return res.status(400).json({ message: "Comment Not Found" });
-        }
-
         return res.status(200).json({
-            message: "Comment like count fetched successfully",
+            message: CommentLikeCount === 0 ? "No comments like found" : "Comment like count fetched successfully",
             CommentLikeCount
         });
 
@@ -127,9 +119,64 @@ const GetCommentLikeCount = async (req,res) => {
     }
 }
 
+const CheckUserLiked = async (req,res) => {
+    try {
+        const user = req.user._id
+        let videoid = req.params.videoid
+        videoid = videoid.replace(/^:/, '')
+
+        if (!mongoose.Types.ObjectId.isValid(videoid)) {
+            return res.status(400).json({ message: "Invalid video ID" });
+        }
+
+        const CheckLike = await Like.findOne({
+            Videos : videoid,
+            LikedBy : user
+        })
+
+        if(!CheckLike){
+            return res.status(200).json({ IsLiked : false });
+        }
+
+        return res.status(200).json({ IsLiked : true });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Somthing wrong try agian" })
+    }
+}
+
+const CheckUserCommentLiked = async (req,res) => {
+    try {
+        const user = req.user._id
+        let commentid = req.params.commentid
+        commentid = commentid.replace(/^:/, '')
+
+        if (!mongoose.Types.ObjectId.isValid(commentid)) {
+            return res.status(400).json({ message: "Invalid Comment ID" });
+        }
+
+        const CheckLike = await Like.findOne({
+            Commnets : commentid,
+            LikedBy : user
+        })
+
+        if(!CheckLike){
+            return res.status(200).json({ IsLiked : false });
+        }
+
+        return res.status(200).json({ IsLiked : true });
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: "Somthing wrong try agian" })
+    }
+}
+
 export {
     ToggleVideoLike,
     ToggleCommentLike,
     GetVideoLikeCount,
-    GetCommentLikeCount
+    GetCommentLikeCount,
+    CheckUserLiked,
+    CheckUserCommentLiked
 }

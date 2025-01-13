@@ -1,5 +1,5 @@
 import express from 'express'
-import { DeleteVideo, GetAllVideos, GetVideoById, ToggleVideoPublic, UpdateVideo, UploadVideo } from '../Controller/video.controller.js'
+import { CheckVideoowner, DeleteVideo, GetAllVideos, GetChannelAllVideo, GetIndivisualUserVideo, GetVideoById, ToggleVideoPublic, UpdateVideo, UploadVideo, ChechVideoPublic } from '../Controller/video.controller.js'
 import VerifyJWT from "../midelware/JWT.midelware.js";
 import { upload } from "../midelware/multer.midelwar.js";
 
@@ -21,6 +21,10 @@ VideoRouter.route('/delete/:id').delete(VerifyJWT,DeleteVideo)
 VideoRouter.route('/getallvideo').get(GetAllVideos)
 VideoRouter.route('/getvideo/:id').get(GetVideoById)
 VideoRouter.route('/updatevideo/:id').put(upload.single("thumbnail"),VerifyJWT,UpdateVideo)
+VideoRouter.route('/checkvideopublic/:id').get(VerifyJWT,ChechVideoPublic)
 VideoRouter.route('/togglevideopublic/:id').put(VerifyJWT,ToggleVideoPublic)
+VideoRouter.route('/getuservideo').get(VerifyJWT,GetIndivisualUserVideo)
+VideoRouter.route('/checkuser/:videoId').get(VerifyJWT,CheckVideoowner)
+VideoRouter.route('/getchannelvideos/:channelid').get(GetChannelAllVideo)
 
 export default VideoRouter

@@ -6,11 +6,14 @@ import SubscriptionRoutes from './routes/subscription.routes.js'
 import CommnetRoutes from './routes/comment.routes.js'
 import LikeRouter from './routes/like.routes.js';
 import PlaylistRouter from './routes/playlist.routes.js';
+import cookieParser from "cookie-parser";
+
 
 const app = express()
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));  // Parses application/x-www-form-urlencoded
+app.use(cookieParser());
 
 app.use(cors({
     origin : 'http://localhost:5173',
