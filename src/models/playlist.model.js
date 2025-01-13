@@ -8,7 +8,7 @@ const PlaySchema = new mongoose.Schema({
     Videos: [
         {
             type: mongoose.Types.ObjectId,
-            ref: 'Video'
+            ref: 'video'
         }
     ],
     owner : {

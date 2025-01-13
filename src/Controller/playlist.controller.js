@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import PlayList from "../models/playlist.model.js";
+import { Video } from "../models/video.model.js";
 
 const MakePlayList = async (req, res) => {
     try {
@@ -18,52 +19,53 @@ const MakePlayList = async (req, res) => {
 
         await NewPlaylist.save()
 
-        return res.status(500).json({ message: "PlayList added", NewPlaylist })
+        return res.status(200).json({ message: "PlayList added", NewPlaylist })
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({ message: "Somthing wrong try agian" })
     }
 }
 
-const AddVideoInPlayList = async (req, res) => {
+const ToggleVideoAddAndRemove = async (req, res) => {
     try {
-        let PlayListID = req.params.playlistid
-        PlayListID = PlayListID.replace(/^:/, "")
+        let PlayListID = req.params.playlistid;
+        PlayListID = PlayListID.replace(/^:/, "");
 
         if (!mongoose.Types.ObjectId.isValid(PlayListID)) {
             return res.status(400).json({ message: "Invalid Playlist ID" });
         }
 
-        let VideoID = req.params.videoid
-        VideoID = VideoID.replace(/^:/, "")
+        let VideoID = req.params.videoid;
+        VideoID = VideoID.replace(/^:/, "");
 
         if (!mongoose.Types.ObjectId.isValid(VideoID)) {
             return res.status(400).json({ message: "Invalid video ID" });
         }
 
-        const playlist = await PlayList.findById({
-            _id: PlayListID
-        })
+        const playlist = await PlayList.findById({ _id: PlayListID });
 
         if (!playlist) {
-            return res.status(400).json({ message: "Playlist not foumd" });
+            return res.status(400).json({ message: "Playlist not found" });
         }
 
-        //check if video already exist
-        if (playlist.Videos.includes(VideoID)) {
-            return res.status(400).json({ message: "Video already exists in the playlist" });
+        // Check if video is already in the playlist
+        const videoIndex = playlist.Videos.indexOf(VideoID);
+
+        if (videoIndex !== -1) {
+            // Remove video if it exists
+            playlist.Videos.splice(videoIndex, 1);
+            await playlist.save();
+            return res.status(200).json({ message: "Video removed from the playlist", playlist });
+        } else {
+            // Add video if it does not exist
+            playlist.Videos.push(VideoID);
+            await playlist.save();
+            return res.status(200).json({ message: "Video added to the playlist", playlist });
         }
-
-        playlist.Videos.push(VideoID);
-        await playlist.save()
-
-        return res.status(200).json({ message: "Video added to the playlist", playlist });
-
     } catch (error) {
         return res.status(500).json({ message: "Something went wrong, try again." });
     }
-}
+};
 
 const RemoveVideoInPlayList = async (req, res) => {
     try {
@@ -130,13 +132,14 @@ const DeletePlayList = async (req, res) => {
 const GetUserPlayList = async (req, res) => {
     try {
         const UserId = req.user._id;
-        
+
         const FindUserPlayList = await PlayList.find({
             owner: UserId
-        });
+        })
+        .populate('Videos', 'title thumbnail');
 
         if (!FindUserPlayList || FindUserPlayList.length === 0) {
-            return res.status(404).json({ message: "No playlists found for this user" });
+            return res.status(204).json({ message: "No playlists found for this user" });
         }
 
         return res
@@ -147,11 +150,12 @@ const GetUserPlayList = async (req, res) => {
             });
 
     } catch (error) {
+        console.log(error)
         return res.status(500).json({ message: "Something went wrong, try again." });
     }
 }
 
-const GetPlayListVideos = async (req,res) => {
+const GetPlayListVideos = async (req, res) => {
     try {
         const UserId = req.user._id
         const PlayListID = req.params.playlistid.replace(/^:/, "")
@@ -161,9 +165,17 @@ const GetPlayListVideos = async (req,res) => {
         }
 
         const playlist = await PlayList.findOne({
-            _id : PlayListID,
-            owner : UserId
+            _id: PlayListID,
+            owner: UserId
         })
+        .populate({
+            path: 'Videos', // Populate the 'Videos' field
+            select: 'thumbnail title views _id createdAt', // Select video fields
+            populate: {
+                path: 'owner', // Populate the 'owner' field in each video
+                select: 'avatar channel_name' // Select owner fields
+            }
+        });        
 
         if (!playlist) {
             return res.status(404).json({ message: "Playlist not found or access denied" });
@@ -171,21 +183,58 @@ const GetPlayListVideos = async (req,res) => {
 
         return res.status(200).json({
             message: "Playlist videos fetched successfully",
-            Playlistname : playlist.Playlistname,
-            videos: playlist.Videos,
+            videos: playlist,
         });
 
     } catch (error) {
-        console.log(error)
+        return res.status(500).json({ message: "Something went wrong, try again." });
+    }
+}
+
+const CheckVideoAlredyInPlayList = async (req, res) => {
+    try {
+        let PlayListID = req.params.playlistid;
+        PlayListID = PlayListID.replace(/^:/, "");
+
+        if (!mongoose.Types.ObjectId.isValid(PlayListID)) {
+            return res.status(400).json({ message: "Invalid Playlist ID" });
+        }
+
+        let VideoID = req.params.videoid;
+        VideoID = VideoID.replace(/^:/, "");
+
+        if (!mongoose.Types.ObjectId.isValid(VideoID)) {
+            return res.status(400).json({ message: "Invalid video ID" });
+        }
+
+        const CheckPLayListVideo = await PlayList.findOne({
+            _id: PlayListID,
+            Videos: VideoID
+        })
+
+        if (CheckPLayListVideo) {
+            return res.status(200).json({
+                message: "Video Already Present",
+                AlredyAdded: true,
+            });
+        }
+
+        return res.status(200).json({
+            message: "Video not Present",
+            AlredyAdded: false,
+        });
+
+    } catch (error) {
         return res.status(500).json({ message: "Something went wrong, try again." });
     }
 }
 
 export {
     MakePlayList,
-    AddVideoInPlayList,
+    ToggleVideoAddAndRemove,
     RemoveVideoInPlayList,
     DeletePlayList,
     GetUserPlayList,
-    GetPlayListVideos
+    GetPlayListVideos,
+    CheckVideoAlredyInPlayList
 }
