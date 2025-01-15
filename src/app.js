@@ -18,7 +18,7 @@ app.use(cookieParser());
 app.use(cors({
     origin : [
         'https://mern-stack-yt.netlify.app',
-        'https://mern-stack-virid-ten.vercel.app'
+        'https://mern-stack-7m1dxm7h4-jigneshs-projects-31c6c91b.vercel.app'
     ],
     credentials : true
 }))
