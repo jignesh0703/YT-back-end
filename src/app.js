@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));  // Parses application/x-www-fo
 app.use(cookieParser());
 
 app.use(cors({
-    origin : 'https://mern-stack-virid-ten.vercel.app/',
+    origin : 'https://mern-stack-virid-ten.vercel.app',
     credentials : true
 }))
 
