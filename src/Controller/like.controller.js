@@ -75,7 +75,7 @@ const ToggleCommentLike = async (req, res) => {
     }
 }
 
-const GetVideoLikeCount = async (req,res) => {
+const GetVideoLikeCount = async (req, res) => {
     try {
         let Videoid = req.params.videoid;
         Videoid = Videoid.replace(/^:/, "")
@@ -84,7 +84,7 @@ const GetVideoLikeCount = async (req,res) => {
             return res.status(400).json({ message: "Invalid video ID" });
         }
 
-        const LikeCount = await Like.countDocuments({ Videos : Videoid })
+        const LikeCount = await Like.countDocuments({ Videos: Videoid })
 
         return res.status(200).json({
             message: "Video like count fetched successfully",
@@ -96,7 +96,7 @@ const GetVideoLikeCount = async (req,res) => {
     }
 }
 
-const GetCommentLikeCount = async (req,res) => {
+const GetCommentLikeCount = async (req, res) => {
     try {
         let CommentID = req.params.commentid
         CommentID = CommentID.replace(/^:/, "")
@@ -106,7 +106,7 @@ const GetCommentLikeCount = async (req,res) => {
         }
 
         const CommentLikeCount = await Like.countDocuments({
-            Commnets : CommentID
+            Commnets: CommentID
         })
 
         return res.status(200).json({
@@ -119,7 +119,7 @@ const GetCommentLikeCount = async (req,res) => {
     }
 }
 
-const CheckUserLiked = async (req,res) => {
+const CheckUserLiked = async (req, res) => {
     try {
         const user = req.user._id
         let videoid = req.params.videoid
@@ -130,22 +130,22 @@ const CheckUserLiked = async (req,res) => {
         }
 
         const CheckLike = await Like.findOne({
-            Videos : videoid,
-            LikedBy : user
+            Videos: videoid,
+            LikedBy: user
         })
 
-        if(!CheckLike){
-            return res.status(200).json({ IsLiked : false });
+        if (!CheckLike) {
+            return res.status(200).json({ IsLiked: false });
         }
 
-        return res.status(200).json({ IsLiked : true });
+        return res.status(200).json({ IsLiked: true });
 
     } catch (error) {
         return res.status(500).json({ message: "Somthing wrong try agian" })
     }
 }
 
-const CheckUserCommentLiked = async (req,res) => {
+const CheckUserCommentLiked = async (req, res) => {
     try {
         const user = req.user._id
         let commentid = req.params.commentid
@@ -156,15 +156,39 @@ const CheckUserCommentLiked = async (req,res) => {
         }
 
         const CheckLike = await Like.findOne({
-            Commnets : commentid,
-            LikedBy : user
+            Commnets: commentid,
+            LikedBy: user
         })
 
-        if(!CheckLike){
-            return res.status(200).json({ IsLiked : false });
+        if (!CheckLike) {
+            return res.status(200).json({ IsLiked: false });
         }
 
-        return res.status(200).json({ IsLiked : true });
+        return res.status(200).json({ IsLiked: true });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Somthing wrong try agian" })
+    }
+}
+
+const GetLikedVideos = async (req, res) => {
+    try {
+        const user = req.user._id
+
+        const GetLiked = await Like.find({
+            LikedBy: user,
+            Videos: { $ne: null }
+        })
+            .populate({
+                path: 'Videos',
+                select: 'thumbnail title views _id createdAt',
+                populate: ({
+                    path: 'owner',
+                    select: 'avatar channel_name'
+                })
+            })
+
+        return res.status(200).json({ message: 'Liked Video Fetch Successfuuly', GetLiked })
 
     } catch (error) {
         console.log(error)
@@ -178,5 +202,6 @@ export {
     GetVideoLikeCount,
     GetCommentLikeCount,
     CheckUserLiked,
-    CheckUserCommentLiked
+    CheckUserCommentLiked,
+    GetLikedVideos
 }

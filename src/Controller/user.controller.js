@@ -590,7 +590,7 @@ const getUserChannelProfile = async (req, res) => {
 const CheckChannel = async (req, res) => {
     try {
         if (!req.user._id) {
-            return res.status(200).json({ user: 'falses' });
+            return res.status(200).json({ user: 'false' });
         }
 
         const user = req.user._id.toString();

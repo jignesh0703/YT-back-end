@@ -6,7 +6,7 @@ const VerifyJWT = async (req, res, next) => {
         const token = req.cookies?.accesstoken || req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
-            return res.status(400).json({ message: "Unauthorized request: Token not found" });
+            return res.status(400).json({ message: "Login is Required" });
         }
 
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);

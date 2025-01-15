@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const LikeSchema = new mongoose.Schema({
     Videos : {
         type : mongoose.Types.ObjectId,
-        ref : "Video"
+        ref : "video"
     },
     Commnets : {
         type : mongoose.Types.ObjectId,

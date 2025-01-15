@@ -1,13 +1,14 @@
 import express from 'express'
-import { toggleSubscription , getUserChannel } from '../Controller/Subscription.controller.js'
+import { toggleSubscription, getUserChannel, CheckIsSubscribed, FetchChannelSubscbed } from '../Controller/Subscription.controller.js'
 import VerifyJWT from '../midelware/JWT.midelware.js'
 
 const SubscriptionRoutes = express.Router()
 
-SubscriptionRoutes.use(VerifyJWT);
-
 SubscriptionRoutes.route('/c/:channelId')
-    .post(toggleSubscription)
+    .post(VerifyJWT , toggleSubscription)
     .get(getUserChannel)
+
+SubscriptionRoutes.route('/check/:channelId').get(VerifyJWT , CheckIsSubscribed)
+SubscriptionRoutes.route('/getusersubscription').get(VerifyJWT , FetchChannelSubscbed)
 
 export default SubscriptionRoutes

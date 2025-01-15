@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Video } from "../models/video.model.js";
 import UploadOnCloudinary from "../utils/cloudnary.js";
 import { v2 as cloudinary } from 'cloudinary';
+import Like from "../models/like.model.js";
 
 const UploadVideo = async (req, res) => {
     try {
@@ -105,6 +106,8 @@ const DeleteVideo = async (req, res) => {
 
         await Video.findByIdAndDelete(videoId)
 
+        await Like.deleteMany({ Videos : videoId })
+
         return res.status(201).json({ message: "Video deleted successfully" })
 
     } catch (error) {
@@ -114,7 +117,7 @@ const DeleteVideo = async (req, res) => {
 
 const GetAllVideos = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 16 } = req.query;
 
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
