@@ -40,7 +40,7 @@ const Registration = async (req, res) => {
 
         const { avatar, coverimage } = req.files;
 
-        if (!avatar?.[0]?.path || !coverimage?.[0]?.path) {
+        if (!avatar || !coverimage) {
             return res.status(400).json({ message: "Both avatar and cover image are required" });
         }
 
