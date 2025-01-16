@@ -1,5 +1,14 @@
-import multer from 'multer';
+import multer from 'multer'
 
-const storage = multer.memoryStorage();  // Use memory storage for buffers instead of saving to disk
+const storage = multer.diskStorage({
+    destination : (req,file,cb) => {
+        cb(null,'./public/upload')
+    },
+    filename: function (req,file,cb) {
+        cb(null,file.originalname)
+    }
+})
 
-export const upload = multer({ storage });  // Use memory storage for incoming files
+export const upload = multer({
+    storage
+})

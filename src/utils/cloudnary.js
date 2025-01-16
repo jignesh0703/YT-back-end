@@ -1,33 +1,44 @@
-import cloudinary from 'cloudinary';
-import { Readable } from 'stream';
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Cloudinary Configuration (ensure you've set this up)
+// Cloudinary configuration
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const UploadOnCloudinary = async (file) => {
-    const bufferStream = new Readable();
-    bufferStream._read = () => {}; // _read is required but you can noop it
-    bufferStream.push(file.buffer);  // Push the file buffer into the stream
-    bufferStream.push(null);  // Indicate end of stream
+const UploadOnCloudinary = async (filePath) => {
+    try {
+        if (!filePath) {
+            console.log("No file path provided");
+            return null;
+        }
 
-    const uploadOptions = {
-        resource_type: 'auto', // Automatically detect the resource type (image/video)
-        folder: 'avatars-and-covers', // Specify the folder in Cloudinary
-    };
+        // Normalize the file path (in case there are issues with backslashes)
+        const normalizedFilePath = path.resolve(filePath);
 
-    return new Promise((resolve, reject) => {
-        bufferStream.pipe(cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(result);
-            }
-        }));
-    });
+        const response = await cloudinary.uploader.upload(normalizedFilePath, {
+            resource_type: 'auto',
+        });
+
+        // Delete the file from the local system after uploading
+        fs.unlinkSync(normalizedFilePath);
+
+        // Return the Cloudinary response with the uploaded file info
+        return response;
+
+    } catch (error) {
+        // Make sure to remove the file in case of an error
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        return null;
+    }
 };
 
 export default UploadOnCloudinary;
