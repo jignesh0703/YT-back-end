@@ -1,20 +1,5 @@
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
 
-const uploadDir = path.join('/tmp', 'upload');
+const storage = multer.memoryStorage();  // Use memory storage for buffers instead of saving to disk
 
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname);
-    }
-});
-
-export const upload = multer({ storage });
+export const upload = multer({ storage });  // Use memory storage for incoming files

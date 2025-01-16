@@ -44,9 +44,9 @@ const Registration = async (req, res) => {
             return res.status(400).json({ message: "Both avatar and cover image are required" });
         }
 
-        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].path)
+        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].buffer)
         console.log(avatarUploadOnCloudinary)
-        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].path)
+        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].buffer)
         console.log(coverimageUploadOnCloudinary)
 
         if (!avatarUploadOnCloudinary || !coverimageUploadOnCloudinary) {
