@@ -2,6 +2,8 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 
+const __dirname = new URL('.', import.meta.url).pathname;
+
 const uploadDir = path.join(__dirname, 'public', 'upload');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
