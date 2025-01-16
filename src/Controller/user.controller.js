@@ -45,7 +45,9 @@ const Registration = async (req, res) => {
         }
 
         const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].path)
+        console.log(avatarUploadOnCloudinary)
         const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].path)
+        console.log(coverimageUploadOnCloudinary)
 
         if (!avatarUploadOnCloudinary || !coverimageUploadOnCloudinary) {
             return res.status(500).json({ message: 'Failed to upload images to Cloudinary.' });
