@@ -40,12 +40,12 @@ const Registration = async (req, res) => {
 
         const { avatar, coverimage } = req.files;
 
-        if (!avatar?.[0]?.path || !coverimage?.[0]?.path) {
+        if (!avatar || !coverimage) {
             return res.status(400).json({ message: "Both avatar and cover image are required" });
         }
 
-        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].path)
-        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].path)
+        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].buffer, `${Date.now()}-${avatar[0].originalname}`);
+        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].buffer, `${Date.now()}-${coverimage[0].originalname}`);
 
         if (!avatarUploadOnCloudinary || !coverimageUploadOnCloudinary) {
             return res.status(500).json({ message: 'Failed to upload images to Cloudinary.' });
@@ -231,7 +231,6 @@ const UpdateAccountDetails = async (req, res) => {
 
         return res.status(200).json({ message: "Account details updated successfully", user });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ message: "Something went wrong, try again" });
     }
 };
