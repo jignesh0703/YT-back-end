@@ -40,13 +40,12 @@ const Registration = async (req, res) => {
 
         const { avatar, coverimage } = req.files;
 
-        if (!avatar || !coverimage) {
+        if (!avatar?.[0]?.path || !coverimage?.[0]?.path) {
             return res.status(400).json({ message: "Both avatar and cover image are required" });
         }
 
-        // Upload to Cloudinary directly using file buffers
-        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].buffer, avatar[0].originalname);
-        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].buffer, coverimage[0].originalname);
+        const avatarUploadOnCloudinary = await UploadOnCloudinary(avatar[0].path)
+        const coverimageUploadOnCloudinary = await UploadOnCloudinary(coverimage[0].path)
 
         if (!avatarUploadOnCloudinary || !coverimageUploadOnCloudinary) {
             return res.status(500).json({ message: 'Failed to upload images to Cloudinary.' });
@@ -116,7 +115,7 @@ const login = async (req, res) => {
         const options = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production", // Ensure secure cookies only in production
-            sameSite: 'Strict'
+            sameSite: 'strict'
         }
 
         res.cookie('accesstoken', accesstoken, options)

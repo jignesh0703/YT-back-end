@@ -1,39 +1,43 @@
 import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Configure Cloudinary
+// Cloudinary configuration
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Upload to Cloudinary directly from memory
-const UploadOnCloudinary = async (fileBuffer, fileName) => {
+const UploadOnCloudinary = async (filePath) => {
     try {
-        if (!fileBuffer) {
-            console.log("No file buffer provided");
+        if (!filePath) {
+            console.log("No file path provided");
             return null;
         }
 
-        const result = await cloudinary.uploader.upload_stream(
-            {
-                resource_type: 'auto', // Automatically detect the file type (image, video, etc.)
-                public_id: `uploads/${fileName}`, // You can specify a custom file name in Cloudinary
-            },
-            (error, result) => {
-                if (error) {
-                    console.log("Error uploading to Cloudinary:", error);
-                    return null;
-                }
-                return result;
-            }
-        );
+        // Normalize the file path (in case there are issues with backslashes)
+        const normalizedFilePath = path.resolve(filePath);
 
-        // Pipe the buffer to Cloudinary's upload stream
-        result.end(fileBuffer);
+        const response = await cloudinary.uploader.upload(normalizedFilePath, {
+            resource_type: 'auto',
+        });
+
+        // Delete the file from the local system after uploading
+        fs.unlinkSync(normalizedFilePath);
+
+        // Return the Cloudinary response with the uploaded file info
+        return response;
 
     } catch (error) {
-        console.error("Error during Cloudinary upload:", error);
+        console.error('Error uploading to Cloudinary:', error.message || error);
+        // Make sure to remove the file in case of an error
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
         return null;
     }
 };
