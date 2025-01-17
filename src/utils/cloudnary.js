@@ -1,42 +1,40 @@
 import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 dotenv.config();
 
-// Cloudinary configuration
+// Configure Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const UploadOnCloudinary = async (filePath) => {
+// Upload to Cloudinary directly from memory
+const UploadOnCloudinary = async (fileBuffer, fileName) => {
     try {
-        if (!filePath) {
-            console.log("No file path provided");
+        if (!fileBuffer) {
+            console.log("No file buffer provided");
             return null;
         }
 
-        // Normalize the file path (in case there are issues with backslashes)
-        const normalizedFilePath = path.resolve(filePath);
+        const result = await cloudinary.uploader.upload_stream(
+            {
+                resource_type: 'auto', // Automatically detect the file type (image, video, etc.)
+                public_id: `uploads/${fileName}`, // You can specify a custom file name in Cloudinary
+            },
+            (error, result) => {
+                if (error) {
+                    console.log("Error uploading to Cloudinary:", error);
+                    return null;
+                }
+                return result;
+            }
+        );
 
-        const response = await cloudinary.uploader.upload(normalizedFilePath, {
-            resource_type: 'auto',
-        });
-
-        // Delete the file from the local system after uploading
-        fs.unlinkSync(normalizedFilePath);
-
-        // Return the Cloudinary response with the uploaded file info
-        return response;
+        // Pipe the buffer to Cloudinary's upload stream
+        result.end(fileBuffer);
 
     } catch (error) {
-        // Make sure to remove the file in case of an error
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
+        console.error("Error during Cloudinary upload:", error);
         return null;
     }
 };
