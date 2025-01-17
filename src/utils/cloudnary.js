@@ -20,12 +20,10 @@ const UploadOnCloudinary = async (filePath) => {
 
         // Normalize the file path (in case there are issues with backslashes)
         const normalizedFilePath = path.resolve(filePath);
-        console.log(normalizedFilePath)
 
         const response = await cloudinary.uploader.upload(normalizedFilePath, {
             resource_type: 'auto',
         });
-        console.log(response)
 
         // Delete the file from the local system after uploading
         fs.unlinkSync(normalizedFilePath);
@@ -38,7 +36,7 @@ const UploadOnCloudinary = async (filePath) => {
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
-        console.log('somthing wrong')
+
         return null;
     }
 };
