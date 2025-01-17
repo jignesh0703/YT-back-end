@@ -114,7 +114,7 @@ const login = async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Ensure secure cookies only in production
+            secure: true,
             sameSite: 'Lax'
         }
 
