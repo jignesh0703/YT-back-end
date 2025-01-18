@@ -237,7 +237,7 @@ const UpdateAccountDetails = async (req, res) => {
 
 const Changeavatar = async (req, res) => {
     try {
-        const avatarpath = req.file?.path;
+        const avatarpath = req.file;
 
         if (!avatarpath) {
             return res.status(400).json({ message: "Avatar file is missing" });
@@ -251,11 +251,15 @@ const Changeavatar = async (req, res) => {
 
         if (user.avatar) {
             const avatarURL = user.avatar;
-            const publicId = avatarURL.split('/').slice(-1)[0].split('.')[0]; // Remove version and file extension
+            const publicId = avatarURL
+                .split('/')
+                .slice(-2)
+                .join('/')
+                .replace(/^v[0-9]+\//, '')
+                .replace(/\.[^/.]+$/, '');
             await cloudinary.uploader.destroy(publicId);
         }
-
-        const avatar = await UploadOnCloudinary(avatarpath);
+        const avatar = await UploadOnCloudinary(avatarpath.buffer, `${Date.now()}-${avatarpath.originalname}`);
 
         if (!avatar) {
             return res.status(400).json({ message: "Error while uploading avatar" });
@@ -273,13 +277,14 @@ const Changeavatar = async (req, res) => {
         return res.status(200).json({ message: "Avatar uploaded successfully", user });
 
     } catch (error) {
+        console.log(error)
         return res.status(400).json({ message: "Something went wrong while uploading avatar" });
     }
 };
 
 const Changecoverimage = async (req, res) => {
     try {
-        const coverpath = req.file?.path;
+        const coverpath = req.file;
 
         if (!coverpath) {
             return res.status(400).json({ message: "Coverimage file is missing" });
@@ -293,16 +298,20 @@ const Changecoverimage = async (req, res) => {
 
         if (user.coverimage) {
             const coverimageURL = user.coverimage;
-            const publicId = coverimageURL.split('/').slice(-1)[0].split('.')[0]; // Remove version and file extension
-
+            const publicId = coverimageURL
+                .split('/')
+                .slice(-2)
+                .join('/')
+                .replace(/^v[0-9]+\//, '')
+                .replace(/\.[^/.]+$/, '');            
             const destroyResponse = await cloudinary.uploader.destroy(publicId);
 
             if (destroyResponse.result !== 'ok') {
-                return res.status(500).json({ message: 'Error while deleting old avatar' });
+                return res.status(500).json({ message: 'Error while deleting old cover image' });
             }
         }
 
-        const coverimage = await UploadOnCloudinary(coverpath);
+        const coverimage = await UploadOnCloudinary(coverpath.buffer, `${Date.now()}-${coverpath.originalname}`);
 
         if (!coverimage) {
             return res.status(400).json({ message: "Error while uploading coverimage" });
@@ -320,6 +329,7 @@ const Changecoverimage = async (req, res) => {
         return res.status(200).json({ message: "Coverimage uploaded successfully", user });
 
     } catch (error) {
+        console.log(error)
         return res.status(400).json({ message: "Something went wrong while uploading coverimage" });
     }
 };

@@ -16,11 +16,11 @@ const UploadVideo = async (req, res) => {
 
         const { videolink, thumbnail } = req.files;
 
-        if (!videolink?.[0]?.path) {
+        if (!videolink?.[0]?.buffer) {
             return res.status(400).json({ message: "video is Required!" })
         }
 
-        if (!thumbnail?.[0]?.path) {
+        if (!thumbnail?.[0]?.buffer) {
             return res.status(400).json({ message: "thumbnail is Required!" })
         }
 
@@ -29,8 +29,8 @@ const UploadVideo = async (req, res) => {
             return res.status(400).json({ message: "Uploaded file is not a valid video format!" });
         }
 
-        const uploadVideo = await UploadOnCloudinary(videolink[0].path)
-        const uploadthumbnail = await UploadOnCloudinary(thumbnail[0].path)
+        const uploadVideo = await UploadOnCloudinary(videolink[0].buffer)
+        const uploadthumbnail = await UploadOnCloudinary(thumbnail[0].buffer)
 
         if (!uploadthumbnail) {
             return res.status(500).json({ message: 'Failed to upload thumbnail to Cloudinary.' });
@@ -106,7 +106,7 @@ const DeleteVideo = async (req, res) => {
 
         await Video.findByIdAndDelete(videoId)
 
-        await Like.deleteMany({ Videos : videoId })
+        await Like.deleteMany({ Videos: videoId })
 
         return res.status(201).json({ message: "Video deleted successfully" })
 
@@ -193,11 +193,11 @@ const UpdateVideo = async (req, res) => {
             await cloudinary.uploader.destroy(publicId)
         }
 
-        if (thumbnail && thumbnail.path) {
-            if (!thumbnail.path) {
+        if (thumbnail && thumbnail.buffer) {
+            if (!thumbnail.buffer) {
                 return res.status(403).json({ message: "thubmnail is required" });
             }
-            const UploadInCloudnary = await UploadOnCloudinary(thumbnail.path)
+            const UploadInCloudnary = await UploadOnCloudinary(thumbnail.buffer)
             if (!UploadInCloudnary) {
                 return res.status(403).json({ message: "Fail to upload thubmnail on Cloudinary" });
             }
@@ -212,7 +212,7 @@ const UpdateVideo = async (req, res) => {
     }
 }
 
-const ChechVideoPublic = async (req,res) => {
+const ChechVideoPublic = async (req, res) => {
     try {
         let videoId = req.params.id
         const userId = req.user._id
@@ -233,7 +233,7 @@ const ChechVideoPublic = async (req,res) => {
             return res.status(500).json({ message: "you are not allowed to change anything in this video" })
         }
 
-        return res.status(200).json({ isPublished : video.isPublished })
+        return res.status(200).json({ isPublished: video.isPublished })
 
     } catch (error) {
         return res.status(500).json({ message: "Somthing wrong try again" })
@@ -337,4 +337,15 @@ const GetChannelAllVideo = async (req, res) => {
     }
 }
 
-export { UploadVideo, DeleteVideo, GetAllVideos, GetVideoById, UpdateVideo, ToggleVideoPublic, GetIndivisualUserVideo, CheckVideoowner, GetChannelAllVideo, ChechVideoPublic }
+export {
+    UploadVideo,
+    DeleteVideo,
+    GetAllVideos,
+    GetVideoById,
+    UpdateVideo,
+    ToggleVideoPublic,
+    GetIndivisualUserVideo,
+    CheckVideoowner,
+    GetChannelAllVideo,
+    ChechVideoPublic
+}
