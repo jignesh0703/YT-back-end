@@ -24,6 +24,17 @@ const UploadVideo = async (req, res) => {
             return res.status(400).json({ message: "thumbnail is Required!" })
         }
 
+        const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+        const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024; // 5MB
+
+        if (videolink[0].size > MAX_VIDEO_SIZE) {
+            return res.status(400).json({ message: "Video file is too large. Maximum size is 500MB." });
+        }
+
+        if (thumbnail[0].size > MAX_THUMBNAIL_SIZE) {
+            return res.status(400).json({ message: "Thumbnail is too large. Maximum size is 5MB." });
+        }
+
         const allowedVideoMimeTypes = ["video/mp4", "video/webm", "video/ogg"];
         if (!allowedVideoMimeTypes.includes(videolink[0].mimetype)) {
             return res.status(400).json({ message: "Uploaded file is not a valid video format!" });

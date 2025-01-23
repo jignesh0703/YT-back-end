@@ -12,7 +12,7 @@ cloudinary.config({
 const UploadOnCloudinary = async (fileBuffer, filename) => {
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { resource_type: 'auto', public_id: filename },
+        { resource_type: 'auto', public_id: filename , timeout: 60000 },
         (error, result) => {
           if (error) {
             console.error('Error uploading to Cloudinary:', error);
