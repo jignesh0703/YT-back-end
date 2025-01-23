@@ -11,8 +11,8 @@ import cookieParser from "cookie-parser";
 
 const app = express()
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));  // Parses application/x-www-form-urlencoded
+app.use(express.json({ limit: '200mb' }));  // Increase to 200MB
+app.use(express.urlencoded({ limit: '200mb', extended: true }));  // Increase to 200MB
 app.use(cookieParser());
 
 app.use(cors({
