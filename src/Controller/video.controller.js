@@ -24,8 +24,8 @@ const UploadVideo = async (req, res) => {
             return res.status(400).json({ message: "thumbnail is Required!" })
         }
 
-        const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
-        const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024; // 5MB
+        const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
+        const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
 
         if (videolink[0].size > MAX_VIDEO_SIZE) {
             return res.status(400).json({ message: "Video file is too large. Maximum size is 500MB." });

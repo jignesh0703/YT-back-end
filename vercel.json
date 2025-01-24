@@ -13,9 +13,10 @@
     }
   ],
   "functions": {
-    "api/video": {
+    "api/video/upload": {
       "maxDuration": 60,
-      "memory": 512
+      "memory": 1024,
+      "maxRequestSize": "200MB"
     }
   }
 }
