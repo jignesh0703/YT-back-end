@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "src/server.js"
     }
-  ]
+  ],
+  "functions": {
+    "api/video": {
+      "maxDuration": 60,
+      "memory": 512
+    }
+  }
 }
