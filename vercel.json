@@ -8,8 +8,14 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/video/upload",
       "dest": "src/server.js"
     }
-  ]
+  ],
+  "functions": {
+    "api/video/upload": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }
