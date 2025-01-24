@@ -13,10 +13,7 @@
     }
   ],
     "functions": {
-      "api/video/test.js": {
-        "memory": 3009
-      },
-      "api/video/*.js": {
+      "api/video/**/*.js": {
         "memory": 3009,
         "maxDuration": 30
       }
