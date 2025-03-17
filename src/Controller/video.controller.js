@@ -112,7 +112,13 @@ const DeleteVideo = async (req, res) => {
         if (video.thumbnail) {
             const thumbnailURL = video.thumbnail;
             const publicId = thumbnailURL.split('/').slice(-1)[0].split('.')[0];
-            await cloudinary.uploader.destroy(publicId)
+            const isImage = /\.(jpg|jpeg|png|gif)$/i.test(thumbnailURL);
+
+            if (isImage) {
+                await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+            } else {
+                await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+            }
         }
 
         await Video.findByIdAndDelete(videoId)
