@@ -17,7 +17,7 @@ app.use(cookieParser());
 
 app.use(cors({
     origin : [
-        'https://mern-stack-virid-ten.vercel.app',
+        'https://yt-front-end.onrender.com',
     ],
     credentials: true
 }))
