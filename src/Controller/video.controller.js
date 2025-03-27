@@ -3,6 +3,7 @@ import { Video } from "../models/video.model.js";
 import UploadOnCloudinary from "../utils/cloudnary.js";
 import { v2 as cloudinary } from 'cloudinary';
 import Like from "../models/like.model.js";
+import UserModel from "../models/user.model.js";
 
 const UploadVideo = async (req, res) => {
     try {
@@ -354,6 +355,29 @@ const GetChannelAllVideo = async (req, res) => {
     }
 }
 
+const SearchHandler = async (req, res) => {
+    try {
+        let { search } = req.body
+        if (!search) {
+            return res.status(400).json({ message: 'Search text is required!' })
+        }
+
+        search = search.trim()
+
+        const FindVideo = await Video.find({ title: { $regex: search, $options: 'i' } })
+        const FindUser = await UserModel.find({ channel_name: { $regex: search, $options: 'i' } }).select('-watchHistory -password -refreshToken -createdAt -updatedAt -coverimage -username -email')
+
+        if (FindUser.length === 0 && FindVideo.length === 0) {
+            return res.status(404).json({ message: "No matching users or videos found." })
+        }
+
+        return res.status(200).json({ message: 'User(s) or Video(s) found successfully.', FindUser, FindVideo })
+
+    } catch (error) {
+            return res.status(400).json({ message: 'Something went wrong. Please try again.' })
+    }
+}
+
 export {
     UploadVideo,
     DeleteVideo,
@@ -364,5 +388,6 @@ export {
     GetIndivisualUserVideo,
     CheckVideoowner,
     GetChannelAllVideo,
-    ChechVideoPublic
+    ChechVideoPublic,
+    SearchHandler
 }

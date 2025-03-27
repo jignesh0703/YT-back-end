@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken'
 import { AdminModel } from '../models/Admin.model.js'
 import { Video } from "../models/video.model.js";
 import { v2 as cloudinary } from 'cloudinary';
@@ -22,16 +23,46 @@ const Login = async (req, res) => {
             return res.status(400).json({ message: 'Incorrect password try another' })
         }
 
+        const token = await jwt.sign(
+            {
+                _id: FindEmail._id
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+                expiresIn: '1d'
+            }
+        )
+
+        const option = {
+            httponly: true,
+            secure: true,
+            sameSite: 'None'
+        }
+
+        res.cookie('token', token, option)
         return res.status(200).json({ message: 'Login Succesfully!', FindEmail })
+
     } catch (error) {
         console.log(error)
         return res.status(400).json({ message: 'Somthing wrong try again' })
     }
 }
 
+const Check = async (req, res) => {
+    try {
+        return res.status(200).json({ message: 'Website is Logined', isLogin: true })
+    } catch (error) {
+        return res.status(400).json({ message: 'Somthing wrong try again' })
+    }
+}
+
 const FetchAllVideos = async (req, res) => {
     try {
-        const FindVideos = await Video.find({}).select('-isPublished -updatedAt -createdAt')
+        const FindVideos = await Video.find({})
+            .sort({ createdAt: -1 })
+            .select('-isPublished -updatedAt')
+            .populate('owner', 'avatar channel_name')
+
         return res.status(200).json({ message: 'All videos fetch succesfully!', FindVideos })
 
     } catch (error) {
@@ -91,9 +122,35 @@ const DeleteVideo = async (req, res) => {
     }
 }
 
+const SearchHandler = async (req, res) => {
+    try {
+        let { search } = req.body
+        if (!search) {
+            return res.status(400).json({ message: 'Search text is required!' })
+        }
+
+        search = search.trim()
+
+        const FindVideo = await Video.find({ title: { $regex: search, $options: 'i' } })
+            .select('-isPublished -updatedAt')
+            .populate('owner', 'avatar channel_name')
+
+        if (FindVideo.length === 0) {
+            return res.status(404).json({ message: "No matching videos found." })
+        }
+
+        return res.status(200).json({ message: 'Video(s) found successfully.', FindVideo })
+
+    } catch (error) {
+        return res.status(400).json({ message: 'Something went wrong. Please try again.' })
+    }
+}
+
 export {
     Login,
+    Check,
     FetchAllVideos,
     FetchIndivisualVideo,
-    DeleteVideo
+    DeleteVideo,
+    SearchHandler
 }
